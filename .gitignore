@@ -1,1 +1,7 @@
+gcc-12.2.0.tar.gz
+gcc-12.2.0/
+gcc-build/
+gcc-install/
 main.o
+plugin_cfi_pa_rtl.o
+plugin_cfi_pa_rtl.so
