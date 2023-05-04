@@ -1,52 +1,150 @@
-#include <iostream>
-#include "gcc-plugin.h"
+#include <stdio.h>
+#include <gcc-plugin.h>
 #include "plugin-version.h"
-//extern int __dso_handle;
+#include <context.h>
+#include <tree.h>
+#include <tree-pass.h>
+#include <rtl.h>
+#include <memmodel.h>
+#include <emit-rtl.h>
 
+#define TODO_dump_func 0
+
+#define P(...) {printf("[+] " __VA_ARGS__); printf("\n");}
 
 // We must assert that this plugin is GPL compatible
 int plugin_is_GPL_compatible;
 
-int plugin_init (struct plugin_name_args *plugin_info,
-		struct plugin_gcc_version *version)
+static void setup_others(rtx_insn * insn);
+static void finish_others(rtx_insn * insn);
+static void setup_main(rtx_insn * insn);
+static void finish_main(rtx_insn * insn);
+
+
+typedef void(* rad)(rtx_insn * insn);
+struct {rad setup; rad finish;} rads[]=
 {
-	// We check the current gcc loading this plugin against the gcc we used to
-	// created this plugin
-	if (!plugin_default_version_check (version, &gcc_version))
+    {setup_main,  finish_main},
+    {setup_others, finish_others},
+};                
+
+
+static void setup_main(rtx_insn * insn){
+
+    P("In main() prologue");
+    
+
+    rtx reg = gen_rtx_REG(DImode, 0);         // access to ax in 64 bit mode (rax)
+    rtx imm = gen_rtx_CONST_INT(DImode, 5);   // immediate int64 $5
+    rtx set = gen_rtx_SET(reg, imm);          // save the result of instr. to reg
+    //print_rtl_single(stderr, set);
+    emit_insn_before(set, insn);
+}
+
+
+static void finish_main(rtx_insn * insn){
+}
+
+
+static void setup_others(rtx_insn * insn){
+}
+
+
+static void finish_others(rtx_insn * insn){
+}
+
+
+static bool cfi_gate(void){
+    return true;
+}
+
+
+static unsigned cfi_enforce(void){
+	rtx_insn * insn;
+    const char * name = get_name(cfun->decl);
+    P("Dealing with: %s", name);
+
+    for (insn=get_insns(); insn; insn=NEXT_INSN(insn)){
+       if (NOTE_P(insn) && (NOTE_KIND(insn) == NOTE_INSN_PROLOGUE_END))
+        {
+            if (name[0] == 'm' && name[1] == 'a' && name[2] == 'i' && name[3] == 'n'){
+                /* in the prologue of main() */
+                //rads[0].setup(insn);
+                printf("main prologue here\n");
+                rads[0].setup(insn);
+            }
+            else{
+                /* in the prologue of other functions */
+                printf("others prologue here\n");
+                //rads[1].setup(insn);
+            }
+        }
+
+        else if (NOTE_P(insn) && (NOTE_KIND(insn) == NOTE_INSN_EPILOGUE_BEG))
+        {   
+            if (name[0] == 'm' && name[1] == 'a' && name[2] == 'i' && name[3] == 'n'){
+                /* in the epilogue of main() */
+                //rads[0].finish(insn);
+                printf("main epilogue here\n"); 
+            }
+            else{
+                /* in the epilogue of other functions */
+                printf("others epilogue here\n"); 
+                //rads[1].finish(insn);
+            }
+        }
+    }
+	return 0;
+}
+
+
+const pass_data my_pass_data = {
+    .type = RTL_PASS,
+    .name = "cfi_banzai",
+    .optinfo_flags = OPTGROUP_NONE,
+    .tv_id = TV_NONE,
+    .properties_required = 0, 
+    .properties_provided = 0, 
+    .properties_destroyed = 0,
+    .todo_flags_start = 0,    
+    .todo_flags_finish = TODO_dump_func,   
+};
+
+
+struct my_pass : rtl_opt_pass{
+public:
+    my_pass(gcc::context *ctx) : rtl_opt_pass(my_pass_data,ctx) {}
+
+    virtual unsigned int execute(function* fun) override
     {
-        std::cerr << "This GCC plugin is for version " << GCCPLUGIN_VERSION_MAJOR << "." << GCCPLUGIN_VERSION_MINOR << "\n";
-		return 1;
+        printf("%s\n", function_name(fun));
+        cfi_enforce();
+        return 0;
     }
 
-    // Let's print all the information given to this plugin!
-
-    std::cerr << "Plugin info\n";
-    std::cerr << "===========\n\n";
-    std::cerr << "Base name: " << plugin_info->base_name << "\n";
-    std::cerr << "Full name: " << plugin_info->full_name << "\n";
-    std::cerr << "Number of arguments of this plugin:" << plugin_info->argc << "\n";
-
-    for (int i = 0; i < plugin_info->argc; i++)
+    virtual bool gate(function* fun) override
     {
-        std::cerr << "Argument " << i << ": Key: " << plugin_info->argv[i].key << ". Value: " << plugin_info->argv[i].value<< "\n";
-
+        return cfi_gate();
+        
     }
-    if (plugin_info->version != NULL)
-    std::cerr << "Version string of the plugin: " << plugin_info->version << "\n";
-    if (plugin_info->help != NULL)
-        std::cerr << "Help string of the plugin: " << plugin_info->help << "\n";
 
-    std::cerr << "\n";
-    std::cerr << "Version info\n";
-    std::cerr << "============\n\n";
-    std::cerr << "Base version: " << version->basever << "\n";
-    std::cerr << "Date stamp: " << version->datestamp << "\n";
-    std::cerr << "Dev phase: " << version->devphase << "\n";
-    std::cerr << "Revision: " << version->devphase << "\n";
-    std::cerr << "Configuration arguments: " << version->configuration_arguments << "\n";
-    std::cerr << "\n";
+    virtual my_pass* clone() override {return this; }
+};
 
-    std::cerr << "Plugin successfully initialized\n";
 
+static struct register_pass_info my_pass_info = {
+    .pass = new my_pass(g),
+    .reference_pass_name = "pro_and_epilogue",
+    .ref_pass_instance_number = 0,
+    .pos_op = PASS_POS_INSERT_AFTER,
+};
+
+
+int plugin_init(struct plugin_name_args *plugin_info, struct plugin_gcc_version *version){
+    if (!plugin_default_version_check (version, &gcc_version)){
+        printf("GCC incompatible version\n");
+        return 1;
+    }
+    register_callback("cfi_banzai", PLUGIN_PASS_MANAGER_SETUP, NULL, &my_pass_info);
     return 0;
 }

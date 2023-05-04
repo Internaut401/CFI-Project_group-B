@@ -19,7 +19,7 @@ CXXFLAGS += -I$(PLUGINDIR)/include
 CFLAGS += -I$(PLUGINDIR)/include
 
 
-all: plugin_cfi_pa_rtl.so
+all: clean plugin_cfi_pa_rtl.so
 	$(CC) -g -fplugin=./plugin_cfi_pa_rtl.so main.c -o main.o -fno-stack-protector;
 
 plugin_cfi_pa_rtl.so: plugin_cfi_pa_rtl.o
