@@ -28,7 +28,6 @@ struct {rad setup; rad finish;} rads[]=
     {setup_others, finish_others},
 };                
 
-
 static void setup_main(rtx_insn * insn){
 
     P("In main() prologue");
@@ -37,8 +36,17 @@ static void setup_main(rtx_insn * insn){
     rtx reg = gen_rtx_REG(DImode, 0);         // access to ax in 64 bit mode (rax)
     rtx imm = gen_rtx_CONST_INT(DImode, 5);   // immediate int64 $5
     rtx set = gen_rtx_SET(reg, imm);          // save the result of instr. to reg
+    rtx_insn * last = emit_insn_before(set, insn);
+
+    // Generate symbol for desired function. This has to be provided by the program 
+    // or an external library, otherwise the linker will treat this as an undefined reference
+    rtx call = gen_rtx_SYMBOL_REF(Pmode, "prova");
+    // Generate call instruction
+    call = gen_rtx_CALL(Pmode, gen_rtx_MEM(FUNCTION_MODE, call), const0_rtx);
+    // Emit call instruction
+    emit_insn_after(call, last);
+
     //print_rtl_single(stderr, set);
-    emit_insn_before(set, insn);
 }
 
 
