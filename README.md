@@ -16,7 +16,7 @@ $ export BASEDIR=/home/user/git/CFI-Project_group-B
 4 - download gcc-12.2.0 and extact it in the repo root folder
  ```
  $ wget https://ftp.gnu.org/gnu/gcc/gcc-12.2.0/gcc-12.2.0.tar.gz
- $ tar -xf https://ftp.gnu.org/gnu/gcc/gcc-12.2.0/gcc-12.2.0.tar.gz
+ $ tar -xf gcc-12.2.0.tar.gz
 ```
 5 - install pre-requisites
 ```
@@ -36,6 +36,7 @@ $ cd ..
 
 # Now create the build directory, gcc-build is a sensible name
 $ mkdir gcc-build
+$ mkdir gcc-install
 
 # Enter the build directory
 $ cd gcc-build
