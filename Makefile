@@ -1,4 +1,4 @@
-GCCDIR = "/home/and00h/git/CFI-Project_group-B/gcc-install/bin"
+GCCDIR = "/home/user/git/CFI-Project_group-B/gcc-install/bin"
 CC = $(GCCDIR)/gcc
 CXX = $(GCCDIR)/g++
 
@@ -21,8 +21,14 @@ CFLAGS += -I$(PLUGINDIR)/include
 STATIC_CFLAGS = -std=c11 -Wall
 STATIC_ARFLAGS = rcs
 
+# Kernel module
+obj-m = mydriver.o
+KVERSION = $(shell uname -r)
+
+
 all: clean libcfi_static.a main 
 	$(CC) -o test main.o -L. -l:libcfi_static.a
+	make -C /lib/modules/$(KVERSION)/build M=$(PWD) modules
 
 main: plugin_cfi_pa_rtl.so
 	$(CC) -g -fplugin=./plugin_cfi_pa_rtl.so -c -o main.o -fno-stack-protector main.c
