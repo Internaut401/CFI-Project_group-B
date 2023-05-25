@@ -70,3 +70,13 @@ export INSTALLDIR=$BASEDIR/gcc-install
 export GCCDIR=$INSTALLDIR/bin
 ```
 
+### LOAD KERNEL MODULE
+⚠️ TEMPORARY SOLUTION ⚠️
+After make compilation, run:
+```shell
+sudo insmod mydriver.ko
+sudo chmod 777 /dev/mydriver
+```
+
+If you want to modify the driver c code, you  need to reboot your machine before compile again.<br>
+That's because is not implemented a clean procedure to completely unload the kernel module and its structures / files.
