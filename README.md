@@ -51,8 +51,17 @@ $ ../gcc-12.2.0/configure --prefix=$INSTALLDIR --enable-languages=c,c++
 # we can use, in order to build GCC in parallel
 $ make -j$(getconf _NPROCESSORS_ONLN)
 
-#install
+# install
 $ make install
+
+
+# kernel module
+sometimes kernel module compilation could result in error. One common problem is:<br>
+https://askubuntu.com/questions/1348250/skipping-btf-generation-xxx-due-to-unavailability-of-vmlinux-on-ubuntu-21-04
+
+so try to:
+$ apt install dwarves
+$ cp /sys/kernel/btf/vmlinux /usr/lib/modules/`uname -r`/build/
 ```
 
 ### CHECK INSTALLATION
