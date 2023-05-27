@@ -3,21 +3,13 @@
 #include <linux/init.h>
 #include <linux/cdev.h>
 #include <linux/uaccess.h>
-#include "driver/QARMA64.h"
 
 #define DEVICE_NAME "mydriver"
 #define DRIVER_CLASS "mydriverclass"
 
 static int major = -1;
 static struct cdev my_cdev;
-static void *secret_key = 0xffffffff00000000;
-static text_t tmp = 0;
-
-text_t plaintext = 0xfb623599da6e8127;
-key_t w0 = 0x84be85ce9804e94b;
-key_t k0 = 0xec2802d4e0a488e9;
-tweak_t tweak = 0x477d469dec0b8762;
-
+static int secret_key = 0x41414141;
 
 static int mydriver_open(struct inode *inode, struct file *file)
 {
@@ -41,34 +33,20 @@ static int mydriver_release(struct inode *inode, struct file *file)
 
 static long mydriver_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
-
-    void *data;
+    int *data;
     switch (cmd) {
     case 0:
-        //encrypt pointer
-        data = (void *)arg;
-        if (copy_from_user(&tmp, data, sizeof(uintptr_t))) {
+        data = (int *)arg;
+        if (copy_from_user(&my_cdev, data, sizeof(int))) {
             return -EFAULT;
         }
-        tmp = qarma64_enc(tmp, tweak, w0, k0, 5);
-        if (copy_to_user(data, &tmp, sizeof(uintptr_t))) {
-            return -EFAULT;
-        }
-        tmp = 0;
         break;
-
     case 1:
-        data = (void *)arg;
-        if (copy_from_user(&tmp, data, sizeof(uintptr_t))) {
+        data = (int *)arg;
+        if (copy_to_user(data, &my_cdev, sizeof(int))) {
             return -EFAULT;
         }
-        tmp = qarma64_dec(tmp, tweak, w0, k0, 5);
-        if (copy_to_user(data, &tmp, sizeof(uintptr_t))) {
-            return -EFAULT;
-        }
-        tmp = 0;
         break;
-
     default:
         return -ENOTTY;
     }

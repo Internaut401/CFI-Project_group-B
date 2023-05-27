@@ -35,7 +35,8 @@ get_key() {
 }
 
 void prova() {
-    int fd, *ptr, value = 42;
+    int fd;
+    uintptr_t *ptr = 0x4141414142424242;
 
     printf("Hello from static library\n");
 
@@ -52,12 +53,12 @@ void prova() {
         exit(1);
     }
 */
-    ioctl(fd, 0, &value); // Saves the integer value in kernel memory
+    ioctl(fd, 0, &ptr); // Saves the integer value in kernel memory
 
-    value = 0;
-    ioctl(fd, 1, &value); // Retrieves the integer value from kernel memory
+    printf("encrypted pointer value is %p\n", ptr);
+    ioctl(fd, 1, &ptr); // Retrieves the integer value from kernel memory
 
-    printf("The integer value is %d\n", value);
+    printf("retrived pointer value is %p\n", ptr);
 
   //  munmap(ptr, sizeof(int));
     close(fd);
