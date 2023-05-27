@@ -7,59 +7,44 @@
 #include <errno.h>
 
 #define DEVICE_NAME "/dev/mydriver"
+#define OVERWRITE_RET_ADDR(new) {\
+uintptr_t *__ret_addr = (uintptr_t *) ((void *) __builtin_frame_address(1) + sizeof(uintptr_t));\
+*__ret_addr = (new);\
+}
+#define RET_ADDR (__builtin_extract_return_addr(__builtin_return_address(1)))
+#define RET_ADDR_PTR ((uintptr_t *) ((void *) __builtin_frame_address(1) + sizeof(uintptr_t)))
 
 const uint8_t key[] = {
     0xEF, 0xBE, 0xAD, 0xDE
 };
 
+static int key_dev;
+
 void cfi_pa_init() {
-    //TODO
+    printf("Initializing CFI PA\n");
+    if ((key_dev = open(DEVICE_NAME, O_RDWR)) < 0) {
+        perror("Cannot open QARMA device\n");
+        exit(-1);
+    }
+    ioctl(key_dev, 2, NULL); // Generate key
     return;
 }
 
-void *
-cfi_pa_encrypt(void *ptr) {
-    printf("Prova\n");
-    return NULL;
+void
+cfi_pa_encrypt() {
+    printf("Encrypting\n");
+    uintptr_t *ret_ptr = RET_ADDR_PTR;
+    ioctl(key_dev, 0, ret_ptr);
 }
 
-void *
-cfi_pa_decrypt(void *ptr) {
-    printf("Prova decrypt\n");
-    return NULL;
+void
+cfi_pa_decrypt() {
+    printf("Decrypting\n");
+    uintptr_t *ret_ptr = RET_ADDR_PTR;
+    ioctl(key_dev, 1, ret_ptr);
 }
 
-const uint8_t *
-get_key() {
-    return key;
-}
-
-void prova() {
-    int fd;
-    uintptr_t *ptr = 0x4141414142424242;
-
-    printf("Hello from static library\n");
-
-
-    fd = open(DEVICE_NAME, O_RDWR);
-    if (fd < 0) {
-        perror("open");
-        exit(1);
-    }
-/*
-    ptr = mmap(NULL, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    if (ptr == MAP_FAILED) {
-        perror("mmap");
-        exit(1);
-    }
-*/
-    ioctl(fd, 0, &ptr); // Saves the integer value in kernel memory
-
-    printf("encrypted pointer value is %p\n", ptr);
-    ioctl(fd, 1, &ptr); // Retrieves the integer value from kernel memory
-
-    printf("retrived pointer value is %p\n", ptr);
-
-  //  munmap(ptr, sizeof(int));
-    close(fd);
+void cfi_pa_exit() {
+    close(key_dev);
+    printf("Closed CFI PA\n");
 }

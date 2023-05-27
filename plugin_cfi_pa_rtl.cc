@@ -32,33 +32,41 @@ static void setup_main(rtx_insn * insn){
 
     P("In main() prologue");
     
-
-    rtx reg = gen_rtx_REG(DImode, 0);         // access to ax in 64 bit mode (rax)
-    rtx imm = gen_rtx_CONST_INT(DImode, 5);   // immediate int64 $5
-    rtx set = gen_rtx_SET(reg, imm);          // save the result of instr. to reg
-    rtx_insn * last = emit_insn_before(set, insn);
-
-    // Generate symbol for desired function. This has to be provided by the program 
-    // or an external library, otherwise the linker will treat this as an undefined reference
-    rtx call = gen_rtx_SYMBOL_REF(Pmode, "prova");
+    rtx call = gen_rtx_SYMBOL_REF(Pmode, "cfi_pa_init");
     // Generate call instruction
     call = gen_rtx_CALL(Pmode, gen_rtx_MEM(FUNCTION_MODE, call), const0_rtx);
     // Emit call instruction
-    emit_insn_after(call, last);
+    rtx_insn *last = emit_insn_before(call, insn);
+
+    rtx s_call = gen_rtx_SYMBOL_REF(Pmode, "cfi_pa_encrypt");
+    s_call = gen_rtx_CALL(Pmode, gen_rtx_MEM(FUNCTION_MODE, s_call), const0_rtx);
+    emit_insn_after(s_call, last);
 
     //print_rtl_single(stderr, set);
 }
 
 
 static void finish_main(rtx_insn * insn){
+    rtx call = gen_rtx_SYMBOL_REF(Pmode, "cfi_pa_decrypt");
+    call = gen_rtx_CALL(Pmode, gen_rtx_MEM(FUNCTION_MODE, call), const0_rtx);
+    rtx_insn *last = emit_insn_after(call, insn);
+    rtx s_call = gen_rtx_SYMBOL_REF(Pmode, "cfi_pa_exit");
+    s_call = gen_rtx_CALL(Pmode, gen_rtx_MEM(FUNCTION_MODE, s_call), const0_rtx);
+    emit_insn_after(s_call, last);
 }
 
 
 static void setup_others(rtx_insn * insn){
+    rtx call = gen_rtx_SYMBOL_REF(Pmode, "cfi_pa_encrypt");
+    call = gen_rtx_CALL(Pmode, gen_rtx_MEM(FUNCTION_MODE, call), const0_rtx);
+    emit_insn_before(call, insn);
 }
 
 
 static void finish_others(rtx_insn * insn){
+    rtx call = gen_rtx_SYMBOL_REF(Pmode, "cfi_pa_decrypt");
+    call = gen_rtx_CALL(Pmode, gen_rtx_MEM(FUNCTION_MODE, call), const0_rtx);
+    rtx_insn *last = emit_insn_after(call, insn);
 }
 
 
@@ -84,7 +92,7 @@ static unsigned cfi_enforce(void){
             else{
                 /* in the prologue of other functions */
                 printf("others prologue here\n");
-                //rads[1].setup(insn);
+                rads[1].setup(insn);
             }
         }
 
@@ -92,13 +100,13 @@ static unsigned cfi_enforce(void){
         {   
             if (name[0] == 'm' && name[1] == 'a' && name[2] == 'i' && name[3] == 'n'){
                 /* in the epilogue of main() */
-                //rads[0].finish(insn);
+                rads[0].finish(insn);
                 printf("main epilogue here\n"); 
             }
             else{
                 /* in the epilogue of other functions */
                 printf("others epilogue here\n"); 
-                //rads[1].finish(insn);
+                rads[1].finish(insn);
             }
         }
     }
