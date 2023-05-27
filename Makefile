@@ -28,7 +28,7 @@ KVERSION = $(shell uname -r)
 
 all: clean libcfi_static.a main 
 	$(CC) -o test main.o -L. -l:libcfi_static.a
-	make -C /lib/modules/$(KVERSION)/build M=$(PWD) modules
+	make -C /lib/modules/$(KVERSION)/build M=$(PWD) mydriver.ko
 
 main: plugin_cfi_pa_rtl.so
 	$(CC) -g -fplugin=./plugin_cfi_pa_rtl.so -c -o main.o -fno-stack-protector main.c
@@ -45,8 +45,11 @@ libcfi_static.a: cfi_static/cfi_static.o
 cfi_static/cfi_static.o: cfi_static/cfi_static.c
 	$(CC) $(STATIC_CFLAGS) -o $@ -c $<
 
+mydriver.o: mydriver.c
+	$(CC) -c -o mydriver.o mydriver.c
+
 clean:
-	rm -f plugin_cfi_pa_rtl.o plugin_cfi_pa_rtl.so main.o cfi_static/cfi_static.o libcfi_static.a test
+	rm -f plugin_cfi_pa_rtl.o plugin_cfi_pa_rtl.so main.o cfi_static/cfi_static.o libcfi_static.a test mydriver.ko mydriver.mod mydriver.mod.c mydriver.mod.o mydriver.o
 		
 #plugin_cfi_pa:
 #	$(CXX) $(CXXFLAGS) -fPIC -c -o plugin_cfi_pa_rtl.o  plugin_cfi_pa_rtl.cc;
