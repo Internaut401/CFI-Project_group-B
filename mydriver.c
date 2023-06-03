@@ -45,6 +45,7 @@ static int mydriver_release(struct inode *inode, struct file *file)
 
 static long encrypt(uintptr_t __user *ret_addr_ptr) {
     uintptr_t ret_addr;
+    uintptr_t rbp = (uintptr_t) ret_addr_ptr - sizeof(uintptr_t);
     uintptr_t sig;
     if (copy_from_user(&ret_addr, ret_addr_ptr, sizeof(uintptr_t))) {
         return -EFAULT;
@@ -52,10 +53,11 @@ static long encrypt(uintptr_t __user *ret_addr_ptr) {
     printk(KERN_DEBUG "cfi-pa: extracted return address 0x%016lx\n", ret_addr);
     ret_addr &= ~SIG_MASK;
     // Encrypt
-    sig = qarma64_enc(ret_addr, tweak, w0, k0, 5) & SIG_MASK;
+    sig = qarma64_enc(ret_addr, rbp, w0, k0, 5) & SIG_MASK;
     ret_addr |= sig;
     printk(KERN_DEBUG "cfi-pa: produced signed return address 0x%016lx\n", ret_addr);
     // Overwrite
+    printk(KERN_DEBUG "rbp extracted: 0x%016lx\n", rbp);
     if (copy_to_user(ret_addr_ptr, &ret_addr, sizeof(uintptr_t))) {
         return -EFAULT;
     }
@@ -65,6 +67,7 @@ static long encrypt(uintptr_t __user *ret_addr_ptr) {
 static long check(uintptr_t __user *ret_addr_ptr) {
     uintptr_t ret_addr;
     uintptr_t ret_sig;
+    uintptr_t rbp = (uintptr_t) ret_addr_ptr - sizeof(uintptr_t);
     uintptr_t exp_sig;
     if (copy_from_user(&ret_addr, ret_addr_ptr, sizeof(uintptr_t))) {
         return -EFAULT;
@@ -74,7 +77,7 @@ static long check(uintptr_t __user *ret_addr_ptr) {
     ret_addr &= ~SIG_MASK;
     printk(KERN_DEBUG "cfi-pa: extracted return address 0x%016lx (signature 0x%04lx)\n", ret_addr, ret_sig >> 48);
     // Check signature
-    exp_sig = qarma64_enc(ret_addr, tweak, w0, k0, 5) & SIG_MASK;
+    exp_sig = qarma64_enc(ret_addr, rbp, w0, k0, 5) & SIG_MASK;
     if (exp_sig != ret_sig) {
         ret_addr = NULL;
         printk(KERN_ERR "cfi-pa: invalid return address signature: expected 0x%04lx, received 0x%04lx\n", exp_sig >> 48, ret_sig >> 48);
