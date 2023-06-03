@@ -4,9 +4,11 @@
 #include <linux/cdev.h>
 #include <linux/uaccess.h>
 #include "driver/QARMA64.h"
+#include <linux/fcntl.h>
 
 #define DEVICE_NAME "mydriver"
 #define DRIVER_CLASS "mydriverclass"
+#define SIG_MASK 0xFFFF000000000000
 
 static int major = -1;
 static struct cdev my_cdev;
@@ -43,14 +45,16 @@ static int mydriver_release(struct inode *inode, struct file *file)
 
 static long encrypt(uintptr_t __user *ret_addr_ptr) {
     uintptr_t ret_addr;
+    uintptr_t sig;
     if (copy_from_user(&ret_addr, ret_addr_ptr, sizeof(uintptr_t))) {
         return -EFAULT;
     }
-    printk("Extracted return address 0x%016lx\n", ret_addr);
+    printk(KERN_DEBUG "cfi-pa: extracted return address 0x%016lx\n", ret_addr);
+    ret_addr &= ~SIG_MASK;
     // Encrypt
-    ret_addr = qarma64_enc(ret_addr, tweak, w0, k0, 5);
-    
-    printk("Produced encrypted return address 0x%016lx\n", ret_addr);
+    sig = qarma64_enc(ret_addr, tweak, w0, k0, 5) & SIG_MASK;
+    ret_addr |= sig;
+    printk(KERN_DEBUG "cfi-pa: produced signed return address 0x%016lx\n", ret_addr);
     // Overwrite
     if (copy_to_user(ret_addr_ptr, &ret_addr, sizeof(uintptr_t))) {
         return -EFAULT;
@@ -60,13 +64,23 @@ static long encrypt(uintptr_t __user *ret_addr_ptr) {
 
 static long check(uintptr_t __user *ret_addr_ptr) {
     uintptr_t ret_addr;
+    uintptr_t ret_sig;
+    uintptr_t exp_sig;
     if (copy_from_user(&ret_addr, ret_addr_ptr, sizeof(uintptr_t))) {
         return -EFAULT;
     }
-    printk("Extracted return address 0x%016lx\n", ret_addr);
+    
+    ret_sig = ret_addr & SIG_MASK;
+    ret_addr &= ~SIG_MASK;
+    printk(KERN_DEBUG "cfi-pa: extracted return address 0x%016lx (signature 0x%04lx)\n", ret_addr, ret_sig >> 48);
     // Check signature
-    ret_addr = qarma64_dec(ret_addr, tweak, w0, k0, 5);
-    printk("Produced decrypted return address 0x%016lx\n", ret_addr);
+    exp_sig = qarma64_enc(ret_addr, tweak, w0, k0, 5) & SIG_MASK;
+    if (exp_sig != ret_sig) {
+        ret_addr = NULL;
+        printk(KERN_ERR "cfi-pa: invalid return address signature: expected 0x%04lx, received 0x%04lx\n", exp_sig >> 48, ret_sig >> 48);
+    } else {
+        printk(KERN_DEBUG "cfi-pa: produced signature 0x%04lx (signature ok)\n", ret_sig >> 48);
+    }
     // Overwrite
     if (copy_to_user(ret_addr_ptr, &ret_addr, sizeof(uintptr_t))) {
         return -EFAULT;
@@ -91,6 +105,7 @@ static long mydriver_ioctl(struct file *file, unsigned int cmd, unsigned long ar
         break;
     case 2:
         ret = gen_key();
+        break;
     default:
         return -ENOTTY;
     }

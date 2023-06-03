@@ -17,7 +17,7 @@ void foo() {
 
 void bad_func() {
     printf("I'm evil\n");
-    OVERWRITE_RET_ADDR((uintptr_t) &foo | 0x4141000000000000);
+    OVERWRITE_RET_ADDR((uintptr_t) &foo);
 }
 
 void good_func() {
@@ -28,5 +28,5 @@ void main(){
     printf("Hello World!\n");
     fun1();
     good_func();
-    //bad_func();
+    bad_func();
 }
