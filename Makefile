@@ -1,4 +1,4 @@
-GCCDIR = "/home/user/git/CFI-Project_group-B/gcc-install/bin"
+GCCDIR = "/home/noobroot/Desktop/CFI/gcc-install/bin"
 CC = $(GCCDIR)/gcc
 CXX = $(GCCDIR)/g++
 

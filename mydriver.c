@@ -5,21 +5,21 @@
 #include <linux/uaccess.h>
 #include "driver/QARMA64.h"
 #include <linux/fcntl.h>
+#include <linux/random.h>
 
 #define DEVICE_NAME "mydriver"
 #define DRIVER_CLASS "mydriverclass"
 #define SIG_MASK 0xFFFF000000000000
-
 static int major = -1;
 static struct cdev my_cdev;
-static void *secret_key = 0xffffffff00000000;
 static text_t tmp = 0;
 static dev_t dev;
 static struct class *my_class;
 
 text_t plaintext = 0xfb623599da6e8127;
-key_t w0 = 0x84be85ce9804e94b;
+key_t secret_key;
 key_t k0 = 0xec2802d4e0a488e9;
+
 tweak_t tweak = 0x477d469dec0b8762;
 
 
@@ -47,13 +47,14 @@ static long encrypt(uintptr_t __user *ret_addr_ptr) {
     uintptr_t ret_addr;
     uintptr_t rbp = (uintptr_t) ret_addr_ptr - sizeof(uintptr_t);
     uintptr_t sig;
+    get_random_bytes(&secret_key , sizeof(secret_key));
     if (copy_from_user(&ret_addr, ret_addr_ptr, sizeof(uintptr_t))) {
         return -EFAULT;
     }
     printk(KERN_DEBUG "cfi-pa: extracted return address 0x%016lx\n", ret_addr);
     ret_addr &= ~SIG_MASK;
     // Encrypt
-    sig = qarma64_enc(ret_addr, rbp, w0, k0, 5) & SIG_MASK;
+    sig = qarma64_enc(ret_addr, rbp, secret_key, k0, 5) & SIG_MASK;
     ret_addr |= sig;
     printk(KERN_DEBUG "cfi-pa: produced signed return address 0x%016lx\n", ret_addr);
     // Overwrite
@@ -76,8 +77,11 @@ static long check(uintptr_t __user *ret_addr_ptr) {
     ret_sig = ret_addr & SIG_MASK;
     ret_addr &= ~SIG_MASK;
     printk(KERN_DEBUG "cfi-pa: extracted return address 0x%016lx (signature 0x%04lx)\n", ret_addr, ret_sig >> 48);
+   
     // Check signature
-    exp_sig = qarma64_enc(ret_addr, rbp, w0, k0, 5) & SIG_MASK;
+    exp_sig = qarma64_enc(ret_addr, rbp, secret_key, k0, 5) & SIG_MASK;
+    printk(KERN_DEBUG "My secret key: %llx\n ",secret_key);
+
     if (exp_sig != ret_sig) {
         ret_addr = NULL;
         printk(KERN_ERR "cfi-pa: invalid return address signature: expected 0x%04lx, received 0x%04lx\n", exp_sig >> 48, ret_sig >> 48);
@@ -92,8 +96,10 @@ static long check(uintptr_t __user *ret_addr_ptr) {
 }
 
 static long gen_key(void) {
-    secret_key = 0xffffffff00000000;
+
+
     return 0;
+
 }
 
 static long mydriver_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
@@ -107,7 +113,7 @@ static long mydriver_ioctl(struct file *file, unsigned int cmd, unsigned long ar
         ret = check((uintptr_t *) arg);
         break;
     case 2:
-        ret = gen_key();
+        gen_key();
         break;
     default:
         return -ENOTTY;
