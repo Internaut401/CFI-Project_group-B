@@ -9,6 +9,11 @@ uintptr_t *__ret_addr = (uintptr_t *) ((void *) __builtin_frame_address(0) + siz
 
 void fun1(){
     printf("Hello i'm fun1\n");
+    nested_fun();
+}
+
+void nested_fun(){
+	printf("I'm a nested function\n");
 }
 
 void foo() {

@@ -47,7 +47,7 @@ static long encrypt(uintptr_t __user *ret_addr_ptr) {
     uintptr_t ret_addr;
     uintptr_t rbp = (uintptr_t) ret_addr_ptr - sizeof(uintptr_t);
     uintptr_t sig;
-    get_random_bytes(&secret_key , sizeof(secret_key));
+
     if (copy_from_user(&ret_addr, ret_addr_ptr, sizeof(uintptr_t))) {
         return -EFAULT;
     }
@@ -96,8 +96,7 @@ static long check(uintptr_t __user *ret_addr_ptr) {
 }
 
 static long gen_key(void) {
-
-
+    get_random_bytes(&secret_key , sizeof(secret_key));
     return 0;
 
 }
