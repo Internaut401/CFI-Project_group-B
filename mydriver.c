@@ -17,8 +17,8 @@ static dev_t dev;
 static struct class *my_class;
 
 text_t plaintext = 0xfb623599da6e8127;
-key_t secret_key;
-key_t k0 = 0xec2802d4e0a488e9;
+qkey_t secret_key_1;
+qkey_t secret_key_2;
 
 tweak_t tweak = 0x477d469dec0b8762;
 
@@ -54,7 +54,7 @@ static long encrypt(uintptr_t __user *ret_addr_ptr) {
     printk(KERN_DEBUG "cfi-pa: extracted return address 0x%016lx\n", ret_addr);
     ret_addr &= ~SIG_MASK;
     // Encrypt
-    sig = qarma64_enc(ret_addr, rbp, secret_key, k0, 5) & SIG_MASK;
+    sig = qarma64_enc(ret_addr, rbp, secret_key_1, secret_key_2, 5) & SIG_MASK;
     ret_addr |= sig;
     printk(KERN_DEBUG "cfi-pa: produced signed return address 0x%016lx\n", ret_addr);
     // Overwrite
@@ -79,8 +79,8 @@ static long check(uintptr_t __user *ret_addr_ptr) {
     printk(KERN_DEBUG "cfi-pa: extracted return address 0x%016lx (signature 0x%04lx)\n", ret_addr, ret_sig >> 48);
    
     // Check signature
-    exp_sig = qarma64_enc(ret_addr, rbp, secret_key, k0, 5) & SIG_MASK;
-    printk(KERN_DEBUG "My secret key: %llx\n ",secret_key);
+    exp_sig = qarma64_enc(ret_addr, rbp, secret_key_1, secret_key_2 , 5) & SIG_MASK;
+    printk(KERN_DEBUG "My secret key: 0x%016lx\n ", secret_key_1);
 
     if (exp_sig != ret_sig) {
         ret_addr = NULL;
@@ -96,7 +96,8 @@ static long check(uintptr_t __user *ret_addr_ptr) {
 }
 
 static long gen_key(void) {
-    get_random_bytes(&secret_key , sizeof(secret_key));
+    get_random_bytes(&secret_key_1, sizeof(secret_key_1));
+    get_random_bytes(&secret_key_2, sizeof(secret_key_2));
     return 0;
 
 }
@@ -161,6 +162,7 @@ static int __init mydriver_init(void)
         return err;
     }
 
+    gen_key();
     return 0;
 }
 

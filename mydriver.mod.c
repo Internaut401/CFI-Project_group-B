@@ -35,6 +35,7 @@ __used __section("__versions") = {
 	{ 0xd0da656b, "__stack_chk_fail" },
 	{ 0xa648e561, "__ubsan_handle_shift_out_of_bounds" },
 	{ 0x13c49cc2, "_copy_from_user" },
+	{ 0x41ed3709, "get_random_bytes" },
 	{ 0x92997ed8, "_printk" },
 	{ 0x6b10bee1, "_copy_to_user" },
 	{ 0xe3ec2f2b, "alloc_chrdev_region" },
@@ -52,4 +53,4 @@ __used __section("__versions") = {
 MODULE_INFO(depends, "");
 
 
-MODULE_INFO(srcversion, "D1335CB80D91D08B2AA767E");
+MODULE_INFO(srcversion, "EEDC2C8342853BD094F90AE");
