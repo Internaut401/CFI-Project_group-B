@@ -66,7 +66,8 @@ static void setup_others(rtx_insn * insn){
 static void finish_others(rtx_insn * insn){
     rtx call = gen_rtx_SYMBOL_REF(Pmode, "cfi_pa_decrypt");
     call = gen_rtx_CALL(Pmode, gen_rtx_MEM(FUNCTION_MODE, call), const0_rtx);
-    rtx_insn *last = emit_insn_after(call, insn);
+    //rtx_insn *last = emit_insn_after(call, insn);
+    emit_insn_after(call, insn);
 }
 
 

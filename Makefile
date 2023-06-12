@@ -49,7 +49,7 @@ mydriver.o: mydriver.c
 	$(CC) -c -o mydriver.o mydriver.c
 
 clean:
-	rm -f plugin_cfi_pa_rtl.o plugin_cfi_pa_rtl.so main.o cfi_static/cfi_static.o libcfi_static.a test mydriver.ko mydriver.mod mydriver.mod.c mydriver.mod.o mydriver.o
+	rm -f plugin_cfi_pa_rtl.o plugin_cfi_pa_rtl.so main.o cfi_static/cfi_static.o libcfi_static.a test mydriver.ko mydriver.mod mydriver.mod.c mydriver.mod.o mydriver.o modules.order Module.symvers
 		
 #plugin_cfi_pa:
 #	$(CXX) $(CXXFLAGS) -fPIC -c -o plugin_cfi_pa_rtl.o  plugin_cfi_pa_rtl.cc;

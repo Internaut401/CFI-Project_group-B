@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include<sys/ioctl.h>
 
 #define DEVICE_NAME "/dev/mydriver"
 #define OVERWRITE_RET_ADDR(new) {\
@@ -14,9 +15,11 @@ uintptr_t *__ret_addr = (uintptr_t *) ((void *) __builtin_frame_address(1) + siz
 #define RET_ADDR (__builtin_extract_return_addr(__builtin_return_address(1)))
 #define RET_ADDR_PTR ((uintptr_t *) ((void *) __builtin_frame_address(1) + sizeof(uintptr_t)))
 
+/*
 const uint8_t key[] = {
     0xEF, 0xBE, 0xAD, 0xDE
 };
+*/
 
 static int key_dev;
 
