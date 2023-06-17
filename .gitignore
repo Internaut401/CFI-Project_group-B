@@ -9,6 +9,7 @@ plugin_cfi_pa_rtl.so
 modules.order
 mydriver.ko
 mydriver.mod
+mydriver.mod.c
 mydriver.mod.o
 mydriver.o
 Module.symvers
