@@ -11,3 +11,4 @@ mydriver.ko
 mydriver.mod
 mydriver.mod.o
 mydriver.o
+Module.symvers
