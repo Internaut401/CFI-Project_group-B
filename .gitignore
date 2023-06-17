@@ -5,3 +5,9 @@ gcc-install/
 main.o
 plugin_cfi_pa_rtl.o
 plugin_cfi_pa_rtl.so
+\ 
+modules.order
+mydriver.ko
+mydriver.mod
+mydriver.mod.o
+mydriver.o
