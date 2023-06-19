@@ -37,7 +37,13 @@ void good_func() {
 
 void main(){
     printf("Hello World!\n");
+    
     fun1();
+    printf("fun1() returned successfully\n");
+
     good_func();
+    printf("good_func() returned successfully\n");
+
     bad_func();
+    printf("You shall not print\n");
 }
