@@ -59,10 +59,10 @@ $ make install
 
 
 # kernel module
-sometimes kernel module compilation could result in error. One common problem is:<br>
-https://askubuntu.com/questions/1348250/skipping-btf-generation-xxx-due-to-unavailability-of-vmlinux-on-ubuntu-21-04
+# sometimes kernel module compilation could result in error. One common problem is:<br>
+# https://askubuntu.com/questions/1348250/skipping-btf-generation-xxx-due-to-unavailability-of-vmlinux-on-ubuntu-21-04
 
-so try to:
+# so try to:
 $ apt install dwarves
 $ cp /sys/kernel/btf/vmlinux /usr/lib/modules/`uname -r`/build/
 ```
