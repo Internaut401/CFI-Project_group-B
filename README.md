@@ -75,7 +75,7 @@ $ $GCCDIR/g++ --version
 ```
 
 ## NOTE
-on linux exported environment variable are not persistent. To make them persistem you can add them to your bash shell configuration file (usually .bashrc or .zshrc file present in your home directory). Add the following line (replace /home/user/git/ with YOUR PATH): 
+on linux exported environment variable are not persistent. To make them persistent you can add them to your bash shell configuration file (usually .bashrc or .zshrc file present in your home directory). Add the following line (replace /home/user/git/ with YOUR PATH): 
 ```
 export BASEDIR=/home/user/git/CFI-Project_group-B
 export INSTALLDIR=$BASEDIR/gcc-install
