@@ -1,5 +1,8 @@
 # CFI-Project_group-B
 
+## OS
+This project was developed on *Ubuntu 22.04.2 LTS* with a *5.19.0-45-generic* kernel version 
+
 ## INSTALLATION AND SETUP
 1 - Download the repository
 ```
