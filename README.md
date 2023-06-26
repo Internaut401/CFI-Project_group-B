@@ -83,12 +83,19 @@ export GCCDIR=$INSTALLDIR/bin
 ```
 
 ### LOAD KERNEL MODULE
-⚠️ TEMPORARY SOLUTION ⚠️
 After make compilation, run:
 ```shell
+# load kernel module
 sudo insmod mydriver.ko
+
+# set permissions to /dev/mydriver
 sudo chmod 777 /dev/mydriver
 ```
 
-If you want to modify the driver c code, you  need to reboot your machine before compile again.<br>
-That's because is not implemented a clean procedure to completely unload the kernel module and its structures / files.
+to unload the kernel module run:
+```shell
+# unload kernel module
+sudo rmmod mydriver
+```
+
+If you want to modify the driver c code, you need to unload the old ones, compile the new code and reload the new compiled one
