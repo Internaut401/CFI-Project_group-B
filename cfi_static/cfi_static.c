@@ -31,10 +31,13 @@ static int key_dev = -1;
 */
 void cfi_pa_init() {
     printf("Initializing CFI PA\n");
+    // check if the device (file) works
     if ((key_dev = open(DEVICE_NAME, O_RDWR)) < 0) {
         perror("Cannot open QARMA device\n");
         exit(-1);
     }
+
+    // DISMISS
     ioctl(key_dev, 2, NULL); // Generate key
     return;
 }
@@ -46,7 +49,11 @@ void cfi_pa_init() {
  */
 void
 cfi_pa_encrypt() {
+    
+    // extract return address pointer
     uintptr_t *ret_ptr = RET_ADDR_PTR;
+    
+    // invoke kernel module to encrypt it
     ioctl(key_dev, 0, ret_ptr);
 }
 
@@ -59,7 +66,11 @@ cfi_pa_encrypt() {
  */
 void
 cfi_pa_decrypt() {
+
+    // extract return address pointer
     uintptr_t *ret_ptr = RET_ADDR_PTR;
+    
+    // invoke kernel module to authenticate it
     ioctl(key_dev, 1, ret_ptr);
 }
 
