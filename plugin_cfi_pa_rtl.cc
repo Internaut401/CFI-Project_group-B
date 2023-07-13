@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include <gcc-plugin.h>
+#include <stdio.h>
 #include "plugin-version.h"
 #include <context.h>
 #include <tree.h>
