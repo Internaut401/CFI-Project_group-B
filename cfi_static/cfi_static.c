@@ -51,13 +51,11 @@ void cfi_pa_init() {
  */
 void
 cfi_pa_encrypt() {
-    
     // extract return address pointer
     uintptr_t *ret_ptr = RET_ADDR_PTR;
     
     // invoke kernel module to encrypt it
     ioctl(key_dev, 0, ret_ptr);
-    __asm__ volatile("pop %%r9\n pop %%r8\n pop %%rsi\n pop %%rdi\n pop %%rdx\n pop %%rcx\n pop %%rax " : : : );
 }
 
 /** Check the signature of the return address.
@@ -73,7 +71,6 @@ cfi_pa_decrypt() {
     
     // invoke kernel module to authenticate it
     ioctl(key_dev, 1, ret_ptr);
-    __asm__ volatile("pop %%r9\n pop %%r8\n pop %%rsi\n pop %%rdi\n pop %%rdx\n pop %%rcx\n pop %%rax " : : : );
 }
 
 /** Close the file descriptor.

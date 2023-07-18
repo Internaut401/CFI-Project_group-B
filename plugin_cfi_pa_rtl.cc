@@ -105,11 +105,6 @@ static void finish_main(rtx_insn * insn){
     rtx call = gen_rtx_SYMBOL_REF(Pmode, "cfi_pa_decrypt");
     call = gen_rtx_CALL(Pmode, gen_rtx_MEM(FUNCTION_MODE, call), const0_rtx);
     rtx_insn *last = emit_insn_after(call, insn);
-
-	// Call cfi_pa_exit from the shared library
-    rtx s_call = gen_rtx_SYMBOL_REF(Pmode, "cfi_pa_exit");
-    s_call = gen_rtx_CALL(Pmode, gen_rtx_MEM(FUNCTION_MODE, s_call), const0_rtx);
-    emit_insn_after(s_call, last);
 }
 
 
@@ -129,8 +124,9 @@ static void finish_others(rtx_insn * insn){
 	// Call cfi_pa_decrypt from the shared library
     rtx call = gen_rtx_SYMBOL_REF(Pmode, "cfi_pa_decrypt");
     call = gen_rtx_CALL(Pmode, gen_rtx_MEM(FUNCTION_MODE, call), const0_rtx);
-    //rtx_insn *last = emit_insn_after(call, insn);
-    emit_insn_after(call, insn);
+    rtx_insn *last = emit_insn_after(call, insn);
+    save_regs_before(last);
+    restore_regs_after(last);
 }
 
 
