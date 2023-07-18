@@ -26,24 +26,75 @@ struct {rad setup; rad finish;} rads[]=
 {
     {setup_main,  finish_main},
     {setup_others, finish_others},
-};                
+};
+
+// Push a register on the stack
+static inline rtx push_reg(unsigned int reg) {
+    rtx r, dec, mem, psh;
+    r = gen_rtx_REG(DImode, reg);
+    dec = gen_rtx_PRE_DEC(DImode, stack_pointer_rtx);
+    mem = gen_rtx_MEM(DImode, dec);
+    psh = gen_rtx_SET(mem, r);
+    return psh;
+}
+
+// Pop a register from the stack
+static inline rtx pop_reg(unsigned int reg) {
+    rtx r, inc, mem, pop;
+    r = gen_rtx_REG(DImode, reg);
+    inc = gen_rtx_POST_INC(DImode, stack_pointer_rtx);
+    mem = gen_rtx_MEM(DImode, inc);
+    pop = gen_rtx_SET(r, mem);
+    return pop;
+}
+
+/*
+* In the x86_64 calling convention the first six arguments of a function call
+* are passed in the rdi, rsi, rdx, rcx, r8, r9 registers, so since cfi_pa_init 
+* and cfi_pa_encrypt may modify the contents of those registers, their content 
+* must be pushed on the stack before calling cfi_pa_init()/cfi_pa_encrypt() and 
+* popped when cfi_pa_encrypt() returns 
+*/
+// Save registers containing function call arguments
+static rtx_insn* save_regs_before(rtx_insn *insn) {
+    rtx_insn *last = emit_insn_before(push_reg(DI_REG), insn);
+    last = emit_insn_after(push_reg(SI_REG), last);
+    last = emit_insn_after(push_reg(DX_REG), last);
+    last = emit_insn_after(push_reg(CX_REG), last);
+    last = emit_insn_after(push_reg(R8_REG), last);
+    last = emit_insn_after(push_reg(R9_REG), last);
+    last = emit_insn_after(push_reg(AX_REG), last);
+
+    return last;
+}
+
+// Restore registers containing function call arguments
+static rtx_insn* restore_regs_after(rtx_insn *insn) {
+    rtx_insn *last = emit_insn_after(pop_reg(AX_REG), insn);
+    last = emit_insn_after(pop_reg(R9_REG), last);
+    last = emit_insn_after(pop_reg(R8_REG), last);
+    last = emit_insn_after(pop_reg(CX_REG), last);
+    last = emit_insn_after(pop_reg(DX_REG), last);
+    last = emit_insn_after(pop_reg(SI_REG), last);
+    last = emit_insn_after(pop_reg(DI_REG), last);
+
+    return last;
+}
 
 static void setup_main(rtx_insn * insn){
-	// Call cfi_pa_init from the shared library
-    
-	P("In main() prologue");
+    P("In main() prologue");
 
-    rtx call = gen_rtx_SYMBOL_REF(Pmode, "cfi_pa_init");
+    // rtx call = gen_rtx_SYMBOL_REF(Pmode, "cfi_pa_init");
     // Generate call instruction
-    call = gen_rtx_CALL(Pmode, gen_rtx_MEM(FUNCTION_MODE, call), const0_rtx);
+    // call = gen_rtx_CALL(Pmode, gen_rtx_MEM(FUNCTION_MODE, call), const0_rtx);
     // Emit call instruction
-    rtx_insn *last = emit_insn_before(call, insn);
-
-	// Call cfi_pa_encrypt from the shared library
+    // rtx_insn *init_call = emit_insn_before(call, insn);
+    
     rtx s_call = gen_rtx_SYMBOL_REF(Pmode, "cfi_pa_encrypt");
     s_call = gen_rtx_CALL(Pmode, gen_rtx_MEM(FUNCTION_MODE, s_call), const0_rtx);
-    emit_insn_after(s_call, last);
-
+    rtx_insn *last_call = emit_insn_before(s_call, insn);
+    save_regs_before(last_call);
+    restore_regs_after(last_call);
     //print_rtl_single(stderr, set);
 }
 
@@ -67,7 +118,9 @@ static void setup_others(rtx_insn * insn){
 	// Call cfi_pa_encrypt from the shared library
     rtx call = gen_rtx_SYMBOL_REF(Pmode, "cfi_pa_encrypt");
     call = gen_rtx_CALL(Pmode, gen_rtx_MEM(FUNCTION_MODE, call), const0_rtx);
-    emit_insn_before(call, insn);
+    rtx_insn *last = emit_insn_before(call, insn);
+    save_regs_before(last);
+    restore_regs_after(last);
 }
 
 

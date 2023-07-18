@@ -13,3 +13,13 @@ mydriver.mod.c
 mydriver.mod.o
 mydriver.o
 Module.symvers
+.Module.symvers.cmd
+.mydriver.ko.cmd
+plugin_cfi_pa_rtl.cc
+.mydriver.mod.cmd
+.mydriver.mod.o.cmd
+.mydriver.o.cmd
+good
+bad
+libcfi_static.so
+.vscode/settings.json

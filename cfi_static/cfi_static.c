@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
-#include<sys/ioctl.h>
+#include <sys/ioctl.h>
 
 #define DEVICE_NAME "/dev/mydriver"
 //#define OVERWRITE_RET_ADDR(new) {\
@@ -25,13 +25,15 @@
 
 // File descriptor of the CFI-PA device
 static int key_dev = -1;
-
+volatile static int ret = -1;
 /** Initialize CFI-PA
  * Opens the QARMA device. If not possible, exit with an error code.
 */
+
+void cfi_pa_init() __attribute__((constructor));
+void cfi_pa_exit() __attribute__((destructor));
+
 void cfi_pa_init() {
-    printf("Initializing CFI PA\n");
-    // check if the device (file) works
     if ((key_dev = open(DEVICE_NAME, O_RDWR)) < 0) {
         perror("Cannot open QARMA device\n");
         exit(-1);
@@ -55,6 +57,7 @@ cfi_pa_encrypt() {
     
     // invoke kernel module to encrypt it
     ioctl(key_dev, 0, ret_ptr);
+    __asm__ volatile("pop %%r9\n pop %%r8\n pop %%rsi\n pop %%rdi\n pop %%rdx\n pop %%rcx\n pop %%rax " : : : );
 }
 
 /** Check the signature of the return address.
@@ -66,17 +69,15 @@ cfi_pa_encrypt() {
  */
 void
 cfi_pa_decrypt() {
-
-    // extract return address pointer
     uintptr_t *ret_ptr = RET_ADDR_PTR;
     
     // invoke kernel module to authenticate it
     ioctl(key_dev, 1, ret_ptr);
+    __asm__ volatile("pop %%r9\n pop %%r8\n pop %%rsi\n pop %%rdi\n pop %%rdx\n pop %%rcx\n pop %%rax " : : : );
 }
 
 /** Close the file descriptor.
  */
 void cfi_pa_exit() {
     close(key_dev);
-    printf("Closed CFI PA\n");
 }
