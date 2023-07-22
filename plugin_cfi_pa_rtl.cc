@@ -105,6 +105,8 @@ static void finish_main(rtx_insn * insn){
     rtx call = gen_rtx_SYMBOL_REF(Pmode, "cfi_pa_decrypt");
     call = gen_rtx_CALL(Pmode, gen_rtx_MEM(FUNCTION_MODE, call), const0_rtx);
     rtx_insn *last = emit_insn_after(call, insn);
+    emit_insn_before(push_reg(AX_REG), last);
+    emit_insn_after(pop_reg(AX_REG), last);
 }
 
 
@@ -125,8 +127,10 @@ static void finish_others(rtx_insn * insn){
     rtx call = gen_rtx_SYMBOL_REF(Pmode, "cfi_pa_decrypt");
     call = gen_rtx_CALL(Pmode, gen_rtx_MEM(FUNCTION_MODE, call), const0_rtx);
     rtx_insn *last = emit_insn_after(call, insn);
-    save_regs_before(last);
-    restore_regs_after(last);
+    emit_insn_before(push_reg(AX_REG), last);
+    emit_insn_after(pop_reg(AX_REG), last);
+    //save_regs_before(last);
+    //restore_regs_after(last);
 }
 
 
@@ -138,22 +142,21 @@ static bool cfi_gate(void){
 static unsigned cfi_enforce(void){
 	rtx_insn * insn;
     const char * name = get_name(cfun->decl);
-    P("Dealing with: %s", name);
+    //P("Dealing with: %s", name);
 
     // loop through instructions
-    for (insn=get_insns(); insn; insn=NEXT_INSN(insn)){
-	   
+    for (insn=get_insns(); insn; insn=NEXT_INSN(insn)) {
 	   	// check if we are in the prologue
     	if (NOTE_P(insn) && (NOTE_KIND(insn) == NOTE_INSN_PROLOGUE_END))
         {
             if (name[0] == 'm' && name[1] == 'a' && name[2] == 'i' && name[3] == 'n'){
                 /* in the prologue of main() */
-                printf("main prologue here\n");
+                //printf("main prologue here\n");
                 rads[0].setup(insn);
             }
             else{
                 /* in the prologue of other functions */
-                printf("others prologue here\n");
+                //printf("others prologue here\n");
                 rads[1].setup(insn);
             }
         }
@@ -164,11 +167,11 @@ static unsigned cfi_enforce(void){
             if (name[0] == 'm' && name[1] == 'a' && name[2] == 'i' && name[3] == 'n'){
                 /* in the epilogue of main() */
                 rads[0].finish(insn);
-                printf("main epilogue here\n"); 
+                //printf("main epilogue here\n"); 
             }
             else{
                 /* in the epilogue of other functions */
-                printf("others epilogue here\n"); 
+                //printf("others epilogue here\n"); 
                 rads[1].finish(insn);
             }
         }
@@ -202,7 +205,7 @@ public:
 	/* The virtual method 'execute' of a pass will be called by GCC for each function being compiled */
     virtual unsigned int execute(function* fun) override
     {
-        printf("%s\n", function_name(fun));
+        //printf("%s\n", function_name(fun));
 		
 		/* call cfi_enforce*/
         cfi_enforce();
