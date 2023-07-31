@@ -20,6 +20,10 @@ make 25,51s user 7,72s system 33,196 total
 $ du -bk <install_folder>/bin
 17768 kB
 ```
+- Runtime execution
+```
+cp -r git/coreutils git/coreutils\_2: 5,971 sec. total 
+```
 
 ## Without plugin
 - Configuration command:
@@ -38,6 +42,10 @@ make 25,33s user 7,82s system 33,784 total
 ```
 $ du -bk <install_folder>/bin
 17304 kB
+```
+- Runtime execution
+```
+cp -r git/coreutils git/coreutils\_1: 0,964 sec. total
 ```
 
 # FFMPEG
@@ -65,6 +73,10 @@ $ du -bk <install_folder>/bin
 $ du -bk <install_folder>/lib
 133703 kB
 ```
+- Runtime execution
+```
+ffmpeg -i input.mp4 output.mp4: 878:39,00 min. total (estimated)
+```
 
 ## Without plugin
 - Configuration command:
@@ -87,4 +99,8 @@ $ du -bk <install_folder>/bin
 218525 kB
 $ du -bk <install_folder>/lib
 131095 kB
+```
+- Runtime execution
+```
+ffmpeg -i input.mp4 output.mp4: 2:33,26 min. total 
 ```
